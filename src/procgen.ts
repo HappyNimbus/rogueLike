@@ -1,7 +1,16 @@
 import { FLOOR_TILE, WALL_TILE, Tile} from './tile-types';
 import { GameMap } from './game-map';
 import { Display } from 'rot-js';
-import { Entity } from './entity';
+import { Entity, spawnGoblin, spawnTroll } from './entity';
+
+
+interface Bounds{
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
 
 class RectangularRoom{
     tiles: Tile[][];
@@ -44,6 +53,15 @@ class RectangularRoom{
         return[centerX, centerY];
     }
 
+    get bounds(): Bounds{
+      return{
+        x1:this.x,
+        y1: this.y,
+        x2: this.x + this.width,
+        y2: this.y + this.height,
+      }
+    }
+
 }
 
 
@@ -53,12 +71,13 @@ export function generateDungeon(
     maxRooms: number,
     minSize: number,
     maxSize: number,
+    maxMonsters: number,
     player: Entity,
     display: Display,
 
 ): GameMap{
 
-    const dungeon = new GameMap(mapWidth, mapHeight, display);
+    const dungeon = new GameMap(mapWidth, mapHeight, display, [player]);
     const rooms: RectangularRoom[] = [];
 
     for (let count = 0; count < maxRooms; count++) {
@@ -75,7 +94,8 @@ export function generateDungeon(
         }
     
         dungeon.addRoom(x, y, newRoom.tiles);
-    
+        
+        placeEntities(newRoom, dungeon, maxMonsters);
         rooms.push(newRoom);
     }
 
@@ -128,5 +148,28 @@ function* connectRooms(
   }
 
   function generateRandomNumber(min: number, max: number){
-    return Math.floor(Math.random() * (max-min)+min);
+    return Math.floor(Math.random() * (max-min+1)+ min);
+  }
+
+
+  function placeEntities(
+    room: RectangularRoom,
+    dungeon: GameMap,
+    maxMonsters: number,
+  ){
+    const numberOfMonsToAdd = generateRandomNumber(0, maxMonsters);
+
+    for(let i = 0; i < numberOfMonsToAdd; i++){
+      const bounds = room.bounds;
+      const x = generateRandomNumber(bounds.x1 + 1, bounds.x2 - 1);
+      const y = generateRandomNumber(bounds.y1 + 1, bounds.y2 - 1);
+
+      if(!dungeon.entities.some((e) => e.x == x && e.y == y)){
+        if (Math.random() < 0.8){
+          dungeon.entities.push(spawnGoblin(x,y));
+        }else{
+          dungeon.entities.push(spawnTroll(x,y));
+        }
+      }
+    }
   }
