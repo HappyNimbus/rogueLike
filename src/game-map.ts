@@ -2,7 +2,7 @@ import type { Tile } from './tile-types';
 import { WALL_TILE } from './tile-types';
 import { Display } from 'rot-js';
 import * as ROT from 'rot-js';
-import { Entity } from './entity';
+import { Entity, Actor } from './entity';
 
 export class GameMap {
   tiles: Tile[][];
@@ -21,6 +21,13 @@ export class GameMap {
 
   public get nonPlayerEntity(): Entity[]{
     return this.entities.filter((e) => e.name !== 'Player');
+  }
+
+  public get actors(): Actor[] {
+    return this.entities
+      .filter((e) => e instanceof Actor)
+      .map((e) => e as Actor)
+      .filter((a) => a.isAlive);
   }
 
   isInBounds(x: number, y: number) {
@@ -67,6 +74,10 @@ export class GameMap {
     );
   }
 
+  getActorLocation(x: number, y:number): Actor | undefined {
+    return this.actors.find((a)=> a.x===x && a.y===y);
+  }
+
   render() {
     for (let y = 0; y < this.tiles.length; y++) {
       const row = this.tiles[y];
@@ -88,9 +99,13 @@ export class GameMap {
         this.display.draw(x,y,char,fg,bg);
       }
     }
-    this.entities.forEach((e)=> {
-      if(this.tiles[e.y][e.x].visible){
-        this.display.draw(e.x, e.y, e.char, e.fg, e.bg);
+    const sortedEntities = this.entities
+      .slice()
+      .sort((a, b) => a.renderOrder - b.renderOrder);
+      
+      sortedEntities.forEach((e) => {
+        if (this.tiles[e.y][e.x].visible) {
+          this.display.draw(e.x, e.y, e.char, e.fg, e.bg);
       }
     });
   }

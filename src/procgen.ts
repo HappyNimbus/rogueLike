@@ -1,7 +1,7 @@
 import { FLOOR_TILE, WALL_TILE, Tile} from './tile-types';
 import { GameMap } from './game-map';
 import { Display } from 'rot-js';
-import { Entity, spawnGoblin, spawnTroll } from './entity';
+import { Entity, spawnOrc, spawnTroll } from './entity';
 
 
 interface Bounds{
@@ -57,8 +57,8 @@ class RectangularRoom{
       return{
         x1:this.x,
         y1: this.y,
-        x2: this.x + this.width,
-        y2: this.y + this.height,
+        x2: this.x + this.width-1,
+        y2: this.y + this.height-1,
       }
     }
 
@@ -166,7 +166,7 @@ function* connectRooms(
 
       if(!dungeon.entities.some((e) => e.x == x && e.y == y)){
         if (Math.random() < 0.8){
-          dungeon.entities.push(spawnGoblin(x,y));
+          dungeon.entities.push(spawnOrc(x,y));
         }else{
           dungeon.entities.push(spawnTroll(x,y));
         }

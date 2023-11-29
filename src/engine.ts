@@ -1,7 +1,7 @@
 import * as ROT from 'rot-js';
 import { GameMap } from './game-map';
 import { handleInput} from './input-handler';
-import { Entity } from './entity';
+import { Actor } from './entity';
 import { generateDungeon } from './procgen';
 
 export class Engine {
@@ -19,10 +19,7 @@ export class Engine {
 
   gameMap: GameMap;
 
-  player: Entity;
-
-  constructor(player: Entity) {
-    this.player = player;
+  constructor(public player: Actor) {
 
     this.display = new ROT.Display({
       width: Engine.WIDTH,
@@ -53,24 +50,35 @@ export class Engine {
 
   update(event: KeyboardEvent) {
     this.display.clear();
-    const action = handleInput(event);
-
-    if (action){
-        action.perform(this, this.player);
+    if (this.player.fighter.hp > 0) {
+      const action = handleInput(event);
+  
+      if (action) {
+        action.perform(this.player);
+      }
+  
+      this.handleEnemyTurns();
     }
-    this.handleEnemyTurns();
+  
     this.gameMap.updateFov(this.player);
     this.render();
   }
 
-  handleEnemyTurns(){
-    this.gameMap.nonPlayerEntity.forEach((e) => {
-      console.log(
-        //`The ${e.name} wonders what to do`
-      );
+  handleEnemyTurns() {
+    this.gameMap.actors.forEach((e) => {
+      if (e.isAlive) {
+        e.ai?.perform(e);
+      }
     });
   }
+
+
   render() {
+    this.display.drawText(
+      1,
+      47,
+      `HP: %c{red}%b{white}${this.player.fighter.hp}/%c{green}%b{white}${this.player.fighter.maxHp}`,
+    );
     this.gameMap.render();
   }
 }
